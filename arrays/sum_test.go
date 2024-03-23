@@ -83,9 +83,6 @@ type Rectangle struct {
 type Circle struct {
 	Radius float64
 }
-type Wallet struct {
-	balance int
-}
 func (r Rectangle) Area() float64 {
 	return r.Width * r.Height
 }
@@ -143,19 +140,23 @@ func Area(rectangle Rectangle) float64 {
 	return rectangle.Width * rectangle.Height
 }
 // Pointers & errors
-func (w *Wallet) Deposit(amount int) {
-	fmt.Printf("adress of balance in Deposite is %p \n", &w.balance)
+type Bitcoin int
+type Wallet struct {
+    balance Bitcoin
+}
+func (w *Wallet) Deposit(amount Bitcoin) {
+	fmt.Printf("address of balance in Deposit is %p \n", &w.balance)
     w.balance += amount
 }
-func (w *Wallet) Balance() int {
+func (w *Wallet) Balance() Bitcoin {
 	return w.balance
 }
 
 func TestWallet(t *testing.T){
 	wallet := Wallet{}
-	wallet.Deposit(10)
+	wallet.Deposit(Bitcoin(10))
 	got := wallet.Balance()
-	want := 10
+	want := Bitcoin(10)
 
 	if got != want {
 		t.Errorf("got %d want %d", got, want)
