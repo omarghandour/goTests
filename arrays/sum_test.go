@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -157,17 +158,62 @@ func (w *Wallet) Balance() Bitcoin {
 func (b Bitcoin) String() string {
 	return fmt.Sprintf("%d BTC", b)
 }
+var ErrInsufficientFunds = errors.New("cannot withdraw, insufficient funds")
 
-func TestWallet(t *testing.T){
-	wallet := Wallet{}
-	wallet.Deposit(Bitcoin(10))
+func (w *Wallet) Withdraw(amount Bitcoin) error {
+
+	if amount > w.balance {
+		return ErrInsufficientFunds
+	}
+
+	w.balance -= amount
+	return nil
+}
+
+func TestWallet(t *testing.T) {
+
+	t.Run("deposit", func(t *testing.T) {
+		wallet := Wallet{}
+		wallet.Deposit(Bitcoin(10))
+		assertBalance(t, wallet, Bitcoin(10))
+	})
+
+	t.Run("withdraw with funds", func(t *testing.T) {
+		wallet := Wallet{Bitcoin(20)}
+		wallet.Withdraw(Bitcoin(10))
+		assertBalance(t, wallet, Bitcoin(10))
+	})
+
+	t.Run("withdraw insufficient funds", func(t *testing.T) {
+		wallet := Wallet{Bitcoin(20)}
+		err := wallet.Withdraw(Bitcoin(100))
+
+		assertError(t, err, ErrInsufficientFunds)
+		assertBalance(t, wallet, Bitcoin(20))
+	})
+}
+
+func assertBalance(t testing.TB, wallet Wallet, want Bitcoin) {
+	t.Helper()
 	got := wallet.Balance()
-	want := Bitcoin(10)
 
 	if got != want {
-		t.Errorf("got %d want %d", got, want)
+		t.Errorf("got %q want %q", got, want)
 	}
 }
+
+func assertError(t testing.TB, got, want error) {
+	t.Helper()
+	if got == nil {
+		t.Fatal("didn't get an error but wanted one")
+	}
+
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+// Maps
+
 func BenchmarkRepeat(b *testing.B) {
 	numbers := []int{1, 2, 3, 4, 5}
 for i := 0; i < b.N; i++ {
